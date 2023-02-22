@@ -1,2 +1,7 @@
 # p2p-marl-atari
-FYP.
+## Package Used
+- python=3.10
+- numpy
+- pytorch
+- pettingzoo[atari]
+- supersuit
