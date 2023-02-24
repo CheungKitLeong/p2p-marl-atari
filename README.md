@@ -3,5 +3,7 @@
 - python=3.10
 - numpy
 - pytorch
+- autorom
+- cmake
 - pettingzoo[atari]
 - supersuit
