@@ -5,6 +5,7 @@ import numpy as np
 # Create a PettingZoo environment for Pong
 env = pong_v3.env(auto_rom_install_path="/research/dept8/fyp22/lhf2205/miniconda3/envs/fyp/lib/python3.10/site-packages/AutoROM/")
 
+
 # Preprocessing of the atari env
 env = supersuit.max_observation_v0(env, 2)
 env = supersuit.sticky_actions_v0(env, repeat_action_probability=0.25)
