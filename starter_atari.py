@@ -3,7 +3,8 @@ from pettingzoo.atari import pong_v3
 import numpy as np
 
 # Create a PettingZoo environment for Pong
-env = pong_v3.env(auto_rom_install_path="/research/dept8/fyp22/lhf2205/miniconda3/envs/fyp/lib/python3.10/site-packages/AutoROM/")
+# env = pong_v3.env(auto_rom_install_path="/research/dept8/fyp22/lhf2205/miniconda3/envs/fyp/lib/python3.10/site-packages/AutoROM/")
+env = pong_v3.env()
 
 
 # Preprocessing of the atari env
