@@ -2,6 +2,10 @@ import supersuit
 from pettingzoo.atari import pong_v3
 import numpy as np
 import torch
+from agent import Agent
+
+NUM_OF_EPISODE = 100
+
 
 # Create a PettingZoo environment for Pong
 # env = pong_v3.env(auto_rom_install_path="/research/dept8/fyp22/lhf2205/miniconda3/envs/fyp/lib/python3.10/site-packages/AutoROM/")
@@ -16,29 +20,33 @@ env = supersuit.frame_stack_v1(env, 4)
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-# Run one episode
-# Reset the environment and get the initial observation
-env.reset()
+#Creating agents
+agents = [None] * env.num_agents
 
-# Define the action space for each player
-action_spaces = [env.action_space(i) for i in ['first_0', 'second_0']] # 'first_0', 'second_0' are the agents' name in this env.
-#print(type(env))
+for episode in range(NUM_OF_EPISODE)
+    # Run one episode
+    # Reset the environment and get the initial observation
+    env.reset()
 
-# Play the game for a few steps with random actions for both players
-for i in range(1):
-    # Choose a random action for each player
-    actions = [action_space.sample() for action_space in action_spaces] #Randomize an action for both two agents
+    # Define the action space for each player
+    #action_spaces = [env.action_space(i) for i in ['first_0', 'second_0']] # 'first_0', 'second_0' are the agents' name in this env.
+    #print(type(env))
 
-    obs, reward, done, trunc,  info = env.last()
+    # Play the game for a few steps with random actions for both players
+    for i in range(1):
+        # Choose a random action for each player
+        actions = [action_space.sample() for action_space in action_spaces] #Randomize an action for both two agents
 
-    # Step the environment with the chosen actions
-    env.step(actions[0]) # First agent step
-    env.step(actions[1]) # Second agent step
+        obs, reward, done, trunc, info = env.last()
 
-    # Print the current observation and reward
-    print(f"Observation: {np.array(obs).shape}")
-    print(f"Reward: {reward}")
+        # Step the environment with the chosen actions
+        env.step(actions[0]) # First agent step
+        env.step(actions[1]) # Second agent step
 
-    # If the game is over, reset the environment
-    if done:
-        obs = env.reset()
+        # Print the current observation and reward
+        print(f"Observation: {np.array(obs).shape}")
+        print(f"Reward: {reward}")
+
+        # If the game is over, reset the environment
+        if done:
+            obs = env.reset()
