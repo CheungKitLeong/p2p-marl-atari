@@ -22,8 +22,7 @@ DQN_HYPERPARAMS = {
     'gamma': 0.99,
     'n_iter_update_nn': 1000,
     'multi_step': 2,
-    'double_dqn': True,
-    'dueling': False
+    'double_dqn': False,
 }
 
 ENV_NAME = "PongNoFrameskip-v4"

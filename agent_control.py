@@ -1,6 +1,6 @@
 import torch
 import numpy as np
-from neural_nets import DQN
+from neural_net import DQN
 import torch.optim as optim
 import torch.nn as nn
 

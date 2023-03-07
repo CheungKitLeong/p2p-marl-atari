@@ -23,7 +23,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 #Creating agents
 agents = [None] * env.num_agents
 
-for episode in range(NUM_OF_EPISODE)
+for episode in range(NUM_OF_EPISODE):
     # Run one episode
     # Reset the environment and get the initial observation
     env.reset()
