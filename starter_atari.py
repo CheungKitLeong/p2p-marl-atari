@@ -5,6 +5,7 @@ import torch
 from agent import Agent
 
 NUM_OF_EPISODE = 100
+MAX_STEP = 1000
 BATCH_SIZE = 32
 
 # Create a PettingZoo environment for Pong
@@ -44,7 +45,7 @@ for episode in range(NUM_OF_EPISODE):
     a = env.reset()
 
     # Play the game for a few steps with random actions for both players
-    for i in range(10000):
+    for i in range(MAX_STEP):
         # Choose a random action for each player
         # actions = [action_space.sample() for action_space in action_spaces] #Randomize an action for both two agents
 
@@ -57,9 +58,10 @@ for episode in range(NUM_OF_EPISODE):
             agents[n].add_to_buffer(obs, action, new_obs, reward, done)
             agents[n].sample_and_improve(BATCH_SIZE)
 
+            # If the game is over, reset the environment
+            if done or trunc:
+                env.reset()
+                break
 
-
-        # If the game is over, reset the environment
         if done or trunc:
-            env.reset()
-            break;
+            break
