@@ -3,7 +3,7 @@ import random
 import numpy as np
 
 class ReplayBuffer:
-    def __init__(self, size, minimum, multi_step, gamma):
+    def __init__(self, size, minimum, gamma):
         self.size = size
         self.minimum = minimum
         # 'deque' is Doubly Ended Queuewhcih we use when we need quicker append and pop operations 
@@ -11,7 +11,7 @@ class ReplayBuffer:
         self.buffer = collections.deque(maxlen = size)
         # For multi_step we have to go multi_step number of transitions from one we decided to sample if it 
         # is possible (if its not done). After iterating, we need to remember last state, total rewards
-        self.multi_step = multi_step
+        self.multi_step = 1
         # We will calculate each reward as reward*gamma^i
         self.gamma = gamma
         

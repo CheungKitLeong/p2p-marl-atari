@@ -9,17 +9,18 @@ class Agent:
 
     Transition = namedtuple('Transition',('state', 'action', 'next_state', 'reward', 'done'), rename = False) # 'rename' means not to overwrite invalid field
 
-    def __init__(self, env, hyperparameters, device, writer):
+    def __init__(self, env, hyperparameters, device, name):
         self.eps_start = hyperparameters['eps_start']
         self.eps_end = hyperparameters['eps_end']
         self.eps_decay = hyperparameters['eps_decay']
         self.epsilon = hyperparameters['eps_start']
         self.n_iter_update_nn = hyperparameters['n_iter_update_nn']
         self.env = env
+        self.name = name
 
-        self.agent_control = AgentControl(env, device, hyperparameters['learning_rate'], hyperparameters['gamma'], hyperparameters['multi_step'], hyperparameters['double_dqn'])
-        self.replay_buffer = ReplayBuffer(hyperparameters['buffer_size'], hyperparameters['buffer_minimum'], hyperparameters['multi_step'], hyperparameters['gamma'])
-        self.summary_writer = writer
+        self.agent_control = AgentControl(env, device, hyperparameters['learning_rate'], hyperparameters['gamma'], name)
+        self.replay_buffer = ReplayBuffer(hyperparameters['buffer_size'], hyperparameters['buffer_minimum'], hyperparameters['gamma'])
+        # self.summary_writer = writer
 
         self.num_iterations = 0
         self.total_reward = 0
@@ -39,7 +40,7 @@ class Agent:
         rand_num = np.random.rand()
         if self.epsilon > rand_num:
             # Select random action - explore
-            return self.env.action_space.sample()
+            return self.env.action_space(self.name).sample()
         else:
             # Select best action
             return self.select_greedy_action(obs)
@@ -78,12 +79,12 @@ class Agent:
         self.ts_frame = self.num_iterations
         self.ts = time.time()
 
-        if self.summary_writer != None:
-            self.summary_writer.add_scalar('reward', self.total_reward, self.num_games)
-            self.summary_writer.add_scalar('mean_reward', np.mean(self.rewards[-40:]), self.num_games)
-            self.summary_writer.add_scalar('10_mean_reward', np.mean(self.rewards[-10:]), self.num_games)
-            self.summary_writer.add_scalar('esilon', self.epsilon, self.num_games)
-            self.summary_writer.add_scalar('loss', np.mean(self.total_loss), self.num_games)
+        # if self.summary_writer != None:
+        #     self.summary_writer.add_scalar('reward', self.total_reward, self.num_games)
+        #     self.summary_writer.add_scalar('mean_reward', np.mean(self.rewards[-40:]), self.num_games)
+        #     self.summary_writer.add_scalar('10_mean_reward', np.mean(self.rewards[-10:]), self.num_games)
+        #     self.summary_writer.add_scalar('epsilon', self.epsilon, self.num_games)
+        #     self.summary_writer.add_scalar('loss', np.mean(self.total_loss), self.num_games)
 
 
 

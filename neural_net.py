@@ -23,7 +23,7 @@ class DQN(nn.Module):
         # So we need to add it every time if we want single frame to run through CNN
         # np.prod flattens output by product of sizes of every dimension
         cnn_output_shape = self.conv_nn(zeros(1, *input_shape))
-        print(cnn_output_shape)
+        #print(cnn_output_shape)
         cnn_output_shape = int(np.prod(cnn_output_shape.size()))
         # Output of regular NN will be 1x6 where 6 stands for 6 actions and how much NN thinks each action is right one
         self.linear_nn = nn.Sequential(

@@ -6,13 +6,14 @@ import torch.nn as nn
 
 class AgentControl:
 
-    def __init__(self, env, device, lr, gamma, multi_step, double_dqn):
+    def __init__(self, env, device, lr, gamma, name):
         self.env = env
         self.device = device
         self.gamma = gamma
+        self.name = name
         # We need to send both NNs to GPU hence '.to("cuda")
-        self.moving_nn = DQN(input_shape = env.observation_space.shape, num_of_actions = env.action_space.n).to(device)
-        self.target_nn = DQN(input_shape = env.observation_space.shape, num_of_actions = env.action_space.n).to(device)
+        self.moving_nn = DQN(input_shape = env.observation_space(name).shape, num_of_actions = env.action_space(name).n).to(device)
+        self.target_nn = DQN(input_shape = env.observation_space(name).shape, num_of_actions = env.action_space(name).n).to(device)
         self.target_nn.load_state_dict(self.moving_nn.state_dict())
 
         self.optimizer = optim.AdamW(self.moving_nn.parameters(), lr=lr)
@@ -23,7 +24,7 @@ class AgentControl:
         # numpy array because input to NN will be list with up to 32 obs (mini batches)
         # and this creates necessary format [1(up to 32),x,y,z] where x,y,z are tensor.shape
         # We need to send data to GPU hence '.to("cuda")
-        tensor_obs = torch.tensor(np.array([obs])).to(self.device)
+        tensor_obs = torch.tensor(np.array([obs]), dtype=torch.float).to(self.device)
         all_actions = self.moving_nn(tensor_obs)
         # .max(1) returns tensor with value and tensor with its number (1 to 6), [1].item() returns only that number 
         return all_actions.max(1)[1].item()
@@ -38,8 +39,8 @@ class AgentControl:
     def calc_loss(self, mini_batch):
         states, actions, next_states, rewards, dones = mini_batch
         # Transform numpy array to Tensor and send it to GPU
-        states_tensor = torch.as_tensor(states).to(self.device)
-        next_states_tensor = torch.as_tensor(next_states).to(self.device)
+        states_tensor = torch.as_tensor(states, dtype=torch.float).to(self.device)
+        next_states_tensor = torch.as_tensor(next_states, dtype=torch.float).to(self.device)
         actions_tensor = torch.as_tensor(actions).to(self.device)
         rewards_tensor = torch.as_tensor(rewards, dtype=torch.float32).to(self.device)
         done_tensor = torch.as_tensor(dones, dtype=torch.uint8).to(self.device)
@@ -48,27 +49,27 @@ class AgentControl:
         # From inputing states into NN, we will get output matrix BATCH_SIZEx6
         # Then with tensor.gather(dimension, index) we find that value with index from actions
         # Finally we use squeeze(-1) to reduce dimensions from 2 to 1
-        curr_state_action_value = self.moving_nn(states_tensor).gather(1,actions_tensor[:,None]).squeeze(-1)
+        curr_state_action_value = self.moving_nn(states_tensor).gather(1,actions_tensor[:, None]).squeeze(-1)
 
-        if self.double_dqn:
-            # Double Q Learning will be implemented with getting max action (serial number) from first NN for each of 32 states,
-            # then we get 32x6 output of second NN and we take value from 32x6 matrix that is on place of serial number from first
-            # Take best action's serial number from first NN
-            double_dqn_max_action = self.moving_nn(next_states_tensor).max(1)[1]
-            double_dqn_max_action.detach()
-            # Get 1x6 with action values from second NN
-            second_nn_actions = self.target_nn(next_states_tensor)
-            next_state_action_value = second_nn_actions.gather(1, double_dqn_max_action[:,None]).squeeze(-1)
-        else:
-            # We need to find best next action and we will get that by appling NN with older params (target_NN)
-            # which we will update to new after X iteration. Using old params we avoid Q Learning problem with not
-            # converging since if we use only one NN its not gradient descent.
-            next_state_action_value = self.target_nn(next_states_tensor).max(1)[0]
+        # if self.double_dqn:
+        #     # Double Q Learning will be implemented with getting max action (serial number) from first NN for each of 32 states,
+        #     # then we get 32x6 output of second NN and we take value from 32x6 matrix that is on place of serial number from first
+        #     # Take best action's serial number from first NN
+        #     double_dqn_max_action = self.moving_nn(next_states_tensor).max(1)[1]
+        #     double_dqn_max_action.detach()
+        #     # Get 1x6 with action values from second NN
+        #     second_nn_actions = self.target_nn(next_states_tensor)
+        #     next_state_action_value = second_nn_actions.gather(1, double_dqn_max_action[:,None]).squeeze(-1)
+        # else:
+        #     # We need to find best next action and we will get that by appling NN with older params (target_NN)
+        #     # which we will update to new after X iteration. Using old params we avoid Q Learning problem with not
+        #     # converging since if we use only one NN its not gradient descent.
+        next_state_action_value = self.target_nn(next_states_tensor).max(1)[0]
         # We do differentiation for moving_nn (w or curr_state_action_value) and we dont do it for target_nn (w'),
         # so we dont have to remember operations for backprop. Good for huge amount of operations
         next_state_action_value = next_state_action_value.detach()
         # Calculate Q-target
-        q_target = rewards_tensor + (self.gamma ** self.multi_step) * next_state_action_value
+        q_target = rewards_tensor + (self.gamma) * next_state_action_value
         # Apply MSE Loss which will be applied to all BATCH_SIZEx1 rows and output will be 1x1 
         return self.loss(curr_state_action_value, q_target)
 
