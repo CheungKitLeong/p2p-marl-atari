@@ -3,7 +3,11 @@ from replay_buffer import ReplayBuffer
 from collections import namedtuple
 import time
 import numpy as np
-import math
+from torch.utils.tensorboard import SummaryWriter
+from datetime import datetime
+from torch import save
+from pathlib import Path
+
 
 class Agent:
 
@@ -20,7 +24,8 @@ class Agent:
 
         self.agent_control = AgentControl(env, device, hyperparameters['learning_rate'], hyperparameters['gamma'], name)
         self.replay_buffer = ReplayBuffer(hyperparameters['buffer_size'], hyperparameters['buffer_minimum'], hyperparameters['gamma'])
-        # self.summary_writer = writer
+        self.path = datetime.now().strftime("%Y-%m-%d_%H_%M_") + name
+        self.summary_writer = SummaryWriter('logs/' + self.path)
 
         self.num_iterations = 0
         self.total_reward = 0
@@ -30,6 +35,8 @@ class Agent:
         self.ts = time.time()
         self.birth_time = time.time()
         self.rewards = []
+        self.defend_frame = 0
+        self.defend_frames = []
 
     def select_greedy_action(self, obs):
         # Give current state to the control who will pass it to NN which will
@@ -47,6 +54,12 @@ class Agent:
 
     def add_to_buffer(self, obs, action, new_obs, reward, done):
         transition = self.Transition(state = obs, action = action, next_state = new_obs, reward = reward, done = done)
+        if reward != 0:
+            self.defend_frame += 1
+        else:
+            self.defend_frames.append(self.defend_frame)
+            self.defend_frame = 0
+
         self.replay_buffer.append(transition)
         self.num_iterations = self.num_iterations + 1
         if self.epsilon > self.eps_end:
@@ -67,25 +80,33 @@ class Agent:
             self.agent_control.update_target_nn()
 
     def reset_parameters(self):
-        self.rewards.append(self.total_reward)
         self.total_reward = 0
         self.num_games = self.num_games + 1
         self.total_loss = []
+        self.defend_frame = 0
 
     def print_info(self):
+        self.rewards.append(self.total_reward)
         # print(self.num_iterations, self.ts_frame, time.time(), self.ts)
         fps = (self.num_iterations-self.ts_frame)/(time.time()-self.ts)
-        print('%d %d rew:%d mean_rew:%.2f fps:%d, eps:%.2f, loss:%.4f' % (self.num_iterations, self.num_games, self.total_reward, np.mean(self.rewards[-40:]), fps, self.epsilon, np.mean(self.total_loss)))
+        print('%d %d rew:%d mean_rew:%.2f fps:%d, eps:%.2f, loss:%.4f' % (self.num_iterations, self.num_games, self.total_reward, np.mean(self.rewards), fps, self.epsilon, np.mean(self.total_loss)))
         self.ts_frame = self.num_iterations
         self.ts = time.time()
 
-        # if self.summary_writer != None:
-        #     self.summary_writer.add_scalar('reward', self.total_reward, self.num_games)
-        #     self.summary_writer.add_scalar('mean_reward', np.mean(self.rewards[-40:]), self.num_games)
-        #     self.summary_writer.add_scalar('10_mean_reward', np.mean(self.rewards[-10:]), self.num_games)
-        #     self.summary_writer.add_scalar('epsilon', self.epsilon, self.num_games)
-        #     self.summary_writer.add_scalar('loss', np.mean(self.total_loss), self.num_games)
+        if self.summary_writer != None:
+            self.summary_writer.add_scalar('reward', self.total_reward, self.num_games)
+            self.summary_writer.add_scalar('mean_reward', np.mean(self.rewards[-40:]), self.num_games)
+            #self.summary_writer.add_scalar('10_mean_reward', np.mean(self.rewards[-10:]), self.num_games)
+            self.summary_writer.add_scalar('epsilon', self.epsilon, self.num_games)
+            self.summary_writer.add_scalar('loss', np.mean(self.total_loss), self.num_games)
+            self.summary_writer.add_scalar('defend_frame', np.mean(self.defend_frames), self.num_games)
 
+        # Save the model dict
+        # Create folder to save models
+        path = 'models/' + self.path
+        Path(path).mkdir(parents=True, exist_ok=True)
+        path = path + '/epoch_' + str(self.num_games)
+        save(self.agent_control.moving_nn.state_dict(), path)
 
 
     

@@ -26,7 +26,7 @@ class ReplayBuffer:
         next_states = []
         rewards = []
         dones = []
-        
+
         for transition in chosen_transitions:        
             i = 0
             total_reward = 0
