@@ -4,7 +4,7 @@ import numpy as np
 import torch
 from agent import Agent
 
-NUM_OF_EPISODE = 100
+NUM_OF_EPISODE = 500
 MAX_STEP = 10000
 BATCH_SIZE = 32
 
@@ -18,7 +18,8 @@ env = supersuit.max_observation_v0(env, 2)
 env = supersuit.sticky_actions_v0(env, repeat_action_probability=0.25)
 env = supersuit.frame_skip_v0(env, 4)
 env = supersuit.max_observation_v0(env, 2)
-env = supersuit.reshape_v0(env, (1, 210, 160))
+env = supersuit.resize_v1(env, 84, 84)
+env = supersuit.reshape_v0(env, (1, 84, 84))
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -27,10 +28,10 @@ DQN_HYPERPARAMS = {
     'eps_start': 1,
     'eps_end': 0.02,
     'eps_decay': 10 ** 5,
-    'buffer_size': 1500,
+    'buffer_size': 3000,
     'buffer_minimum': 1001,
     'learning_rate': 5e-5,
-    'gamma': 0.99,
+    'gamma': 0.9,
     'n_iter_update_nn': 1000,
 }
 print(device)

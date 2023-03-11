@@ -7,6 +7,7 @@ from torch.utils.tensorboard import SummaryWriter
 from datetime import datetime
 from torch import save
 from pathlib import Path
+import pickle
 
 
 class Agent:
@@ -25,6 +26,9 @@ class Agent:
         self.agent_control = AgentControl(env, device, hyperparameters['learning_rate'], hyperparameters['gamma'], name)
         self.replay_buffer = ReplayBuffer(hyperparameters['buffer_size'], hyperparameters['buffer_minimum'], hyperparameters['gamma'])
         self.path = datetime.now().strftime("%Y-%m-%d_%H_%M_") + name
+        Path('models/' + self.path).mkdir(parents=True, exist_ok=True)
+        with open('models/' + self.path + '/hparams.pickle', 'wb') as file:
+            pickle.dump(hyperparameters, file, protocol=pickle.HIGHEST_PROTOCOL)
         self.summary_writer = SummaryWriter('logs/' + self.path)
 
         self.num_iterations = 0
@@ -103,10 +107,10 @@ class Agent:
 
         # Save the model dict
         # Create folder to save models
-        path = 'models/' + self.path
-        Path(path).mkdir(parents=True, exist_ok=True)
-        path = path + '/epoch_' + str(self.num_games)
-        save(self.agent_control.moving_nn.state_dict(), path)
+        if self.num_games % 10 == 0:
+
+            path = 'models/' + self.path + '/epoch_' + str(self.num_games)
+            save(self.agent_control.moving_nn.state_dict(), path)
 
 
     

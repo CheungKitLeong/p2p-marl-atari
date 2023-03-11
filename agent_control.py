@@ -12,8 +12,8 @@ class AgentControl:
         self.gamma = gamma
         self.name = name
         # We need to send both NNs to GPU hence '.to("cuda")
-        self.moving_nn = DQN(input_shape = env.observation_space(name).shape, num_of_actions = env.action_space(name).n).to(device)
-        self.target_nn = DQN(input_shape = env.observation_space(name).shape, num_of_actions = env.action_space(name).n).to(device)
+        self.moving_nn = DQN(input_shape=env.observation_space(name).shape, num_of_actions=env.action_space(name).n).to(device)
+        self.target_nn = DQN(input_shape=env.observation_space(name).shape, num_of_actions=env.action_space(name).n).to(device)
         self.target_nn.load_state_dict(self.moving_nn.state_dict())
 
         self.optimizer = optim.AdamW(self.moving_nn.parameters(), lr=lr)
