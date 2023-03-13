@@ -4,13 +4,13 @@ import numpy as np
 import torch
 from agent import Agent
 
-NUM_OF_EPISODE = 500
+NUM_OF_EPISODE = 600
 MAX_STEP = 10000
 BATCH_SIZE = 32
 
 # Create a PettingZoo environment for Pong
 # env = pong_v3.env(auto_rom_install_path="/research/dept8/fyp22/lhf2205/miniconda3/envs/fyp/lib/python3.10/site-packages/AutoROM/")
-env = pong_v3.env(obs_type='grayscale_image', render_mode='human')
+env = pong_v3.env(obs_type='grayscale_image')
 
 
 # Preprocessing of the atari env
@@ -26,7 +26,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 DQN_HYPERPARAMS = {
     'eps_start': 1,
-    'eps_end': 0.02,
+    'eps_end': 0.1,
     'eps_decay': 10 ** 5,
     'buffer_size': 3000,
     'buffer_minimum': 1001,
