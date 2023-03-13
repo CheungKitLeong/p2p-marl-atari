@@ -58,12 +58,13 @@ class Agent:
 
     def add_to_buffer(self, obs, action, new_obs, reward, done):
         transition = self.Transition(state = obs, action = action, next_state = new_obs, reward = reward, done = done)
-        if reward != 0:
+        if reward == 0:
             self.defend_frame += 1
         else:
             self.defend_frames.append(self.defend_frame)
             self.defend_frame = 0
 
+        #print("%s: %d" % (self.name, self.defend_frame))
         self.replay_buffer.append(transition)
         self.num_iterations = self.num_iterations + 1
         if self.epsilon > self.eps_end:
@@ -88,6 +89,7 @@ class Agent:
         self.num_games = self.num_games + 1
         self.total_loss = []
         self.defend_frame = 0
+        self.defend_frames = []
 
     def print_info(self):
         self.rewards.append(self.total_reward)

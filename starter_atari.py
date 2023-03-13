@@ -10,7 +10,7 @@ BATCH_SIZE = 32
 
 # Create a PettingZoo environment for Pong
 # env = pong_v3.env(auto_rom_install_path="/research/dept8/fyp22/lhf2205/miniconda3/envs/fyp/lib/python3.10/site-packages/AutoROM/")
-env = pong_v3.env(obs_type='grayscale_image')
+env = pong_v3.env(obs_type='grayscale_image', render_mode='human')
 
 
 # Preprocessing of the atari env
@@ -53,6 +53,7 @@ for episode in range(NUM_OF_EPISODE):
         for n in range(2):
             obs, reward, done, trunc, info = env.last()
             action = agents[n].select_eps_greedy_action(obs)
+            #print("Agent %d: action: %d" % (n, action))
             env.step(action)
 
             new_obs, reward, done, trunc, info = env.last()
