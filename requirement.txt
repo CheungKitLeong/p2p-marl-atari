@@ -4,4 +4,3 @@ torchvision
 torchaudio
 pettingzoo
 supersuit
-.DS_Store
