@@ -3,3 +3,5 @@ __pycache__
 logs/
 models/
 drl-dqn-atari-pong/
+models.zip
+_eval.py

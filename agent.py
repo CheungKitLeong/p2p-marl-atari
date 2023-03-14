@@ -5,16 +5,21 @@ import time
 import numpy as np
 from torch.utils.tensorboard import SummaryWriter
 from datetime import datetime
-from torch import save
+from torch import save, load
 from pathlib import Path
-import pickle
+import json
 
 
 class Agent:
+    Transition = namedtuple('Transition', ('state', 'action', 'next_state', 'reward', 'done'),
+                            rename=False)  # 'rename' means not to overwrite invalid field
 
-    Transition = namedtuple('Transition',('state', 'action', 'next_state', 'reward', 'done'), rename = False) # 'rename' means not to overwrite invalid field
+    def __init__(self, env, hyperparameters, device, name, load_path=None):
+        if load_path is not None:
+            self.agent_control = AgentControl(env, device, 0, 0, name)
+            self.agent_control.moving_nn.load_state_dict(load(load_path, map_location=device))
+            return
 
-    def __init__(self, env, hyperparameters, device, name):
         self.eps_start = hyperparameters['eps_start']
         self.eps_end = hyperparameters['eps_end']
         self.eps_decay = hyperparameters['eps_decay']
@@ -24,11 +29,12 @@ class Agent:
         self.name = name
 
         self.agent_control = AgentControl(env, device, hyperparameters['learning_rate'], hyperparameters['gamma'], name)
-        self.replay_buffer = ReplayBuffer(hyperparameters['buffer_size'], hyperparameters['buffer_minimum'], hyperparameters['gamma'])
+        self.replay_buffer = ReplayBuffer(hyperparameters['buffer_size'], hyperparameters['buffer_minimum'],
+                                          hyperparameters['gamma'])
         self.path = datetime.now().strftime("%Y-%m-%d_%H_%M_") + name
         Path('models/' + self.path).mkdir(parents=True, exist_ok=True)
-        with open('models/' + self.path + '/hparams.pickle', 'wb') as file:
-            pickle.dump(hyperparameters, file, protocol=pickle.HIGHEST_PROTOCOL)
+        with open('models/' + self.path + '/hparams.json', 'w') as file:
+            json.dump(hyperparameters, file)
         self.summary_writer = SummaryWriter('logs/' + self.path)
 
         self.num_iterations = 0
@@ -57,14 +63,14 @@ class Agent:
             return self.select_greedy_action(obs)
 
     def add_to_buffer(self, obs, action, new_obs, reward, done):
-        transition = self.Transition(state = obs, action = action, next_state = new_obs, reward = reward, done = done)
+        transition = self.Transition(state=obs, action=action, next_state=new_obs, reward=reward, done=done)
         if reward == 0:
             self.defend_frame += 1
         else:
             self.defend_frames.append(self.defend_frame)
             self.defend_frame = 0
 
-        #print("%s: %d" % (self.name, self.defend_frame))
+        # print("%s: %d" % (self.name, self.defend_frame))
         self.replay_buffer.append(transition)
         self.num_iterations = self.num_iterations + 1
         if self.epsilon > self.eps_end:
@@ -81,7 +87,7 @@ class Agent:
             # So we can calculate mean of all loss during one game
             self.total_loss.append(loss)
 
-        if ( self.num_iterations % self.n_iter_update_nn) == 0:
+        if (self.num_iterations % self.n_iter_update_nn) == 0:
             self.agent_control.update_target_nn()
 
     def reset_parameters(self):
@@ -94,15 +100,17 @@ class Agent:
     def print_info(self):
         self.rewards.append(self.total_reward)
         # print(self.num_iterations, self.ts_frame, time.time(), self.ts)
-        fps = (self.num_iterations-self.ts_frame)/(time.time()-self.ts)
-        print('%d %d rew:%d mean_rew:%.2f fps:%d, eps:%.2f, loss:%.4f' % (self.num_iterations, self.num_games, self.total_reward, np.mean(self.rewards), fps, self.epsilon, np.mean(self.total_loss)))
+        fps = (self.num_iterations - self.ts_frame) / (time.time() - self.ts)
+        print('%d %d %s: rew:%d fps:%d, eps:%.2f, loss:%.4f' % (
+            self.num_iterations, self.num_games, self.name, self.total_reward, fps, self.epsilon,
+            np.mean(self.total_loss)))
         self.ts_frame = self.num_iterations
         self.ts = time.time()
 
-        if self.summary_writer != None:
+        if self.summary_writer is not None:
             self.summary_writer.add_scalar('reward', self.total_reward, self.num_games)
             self.summary_writer.add_scalar('mean_reward', np.mean(self.rewards[-40:]), self.num_games)
-            #self.summary_writer.add_scalar('10_mean_reward', np.mean(self.rewards[-10:]), self.num_games)
+            self.summary_writer.add_scalar('10_mean_reward', np.mean(self.rewards[-10:]), self.num_games)
             self.summary_writer.add_scalar('epsilon', self.epsilon, self.num_games)
             self.summary_writer.add_scalar('loss', np.mean(self.total_loss), self.num_games)
             self.summary_writer.add_scalar('defend_frame', np.mean(self.defend_frames), self.num_games)
@@ -110,9 +118,5 @@ class Agent:
         # Save the model dict
         # Create folder to save models
         if self.num_games % 20 == 0:
-
             path = 'models/' + self.path + '/epoch_' + str(self.num_games) + '.pt'
             save(self.agent_control.moving_nn.state_dict(), path)
-
-
-    
