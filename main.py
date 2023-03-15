@@ -1,4 +1,4 @@
-from training import train_basic
+from training import *
 from wrappers import make_pong
 
 if __name__ == '__main__':
@@ -14,6 +14,6 @@ if __name__ == '__main__':
         'n_iter_update_nn': 1000,
     }
 
-    env = make_pong(render=True)
-    train_basic(env, DQN_HYPERPARAMS, NUM_OF_EPISODE)
+    env = make_pong()
+    train_stationary(env, DQN_HYPERPARAMS, NUM_OF_EPISODE)
 
