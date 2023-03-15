@@ -5,3 +5,4 @@ models/
 drl-dqn-atari-pong/
 models.zip
 _eval.py
+.DS_Store
