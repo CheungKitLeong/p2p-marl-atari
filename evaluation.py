@@ -18,10 +18,10 @@ DQN_HYPERPARAMS = {
     'n_iter_update_nn': 1000,
 }
 
-device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 # device = torch.device("mps")
 
-def evaluation(dir1, dir2, interval=20, max_epoch=600, eval_num=10, MAX_STEP=10000):
+def evaluation(dir1, dir2, interval=20, max_epoch=600, eval_num=100, MAX_STEP=10000):
     env = make_pong()
     def fixed_opponent(fixed_player_epoch=200):
         fixed_r = []
@@ -33,6 +33,7 @@ def evaluation(dir1, dir2, interval=20, max_epoch=600, eval_num=10, MAX_STEP=100
             agents = [fixed_agent, Agent(env, DQN_HYPERPARAMS, device, 'second_0', agent2_dir + 'epoch_{}.pt'.format(current_player))]
             r = []
             for num in range(eval_num):
+                print('fixed ,current_player:', current_player, 'eval_num:', eval_num)
                 env.reset()
                 env.step(1)
                 env.step(1)
@@ -53,7 +54,7 @@ def evaluation(dir1, dir2, interval=20, max_epoch=600, eval_num=10, MAX_STEP=100
                         if trunc:
                             r.append(-1)
                         break
-            print('fixed ,current_player:', current_player, 'eval_num:', num, 'mean:', np.mean(r))
+            print('fixed ,current_player:', current_player, 'mean:', np.mean(r))
             fixed_r.append(r)
             current_player += interval
 
@@ -70,6 +71,7 @@ def evaluation(dir1, dir2, interval=20, max_epoch=600, eval_num=10, MAX_STEP=100
                 ]
             r = []
             for num in range(eval_num):
+                print('adjacent ,current_player:', current_player, 'eval_num:', eval_num)
                 env.reset()
                 env.step(1)
                 env.step(1)
@@ -92,7 +94,7 @@ def evaluation(dir1, dir2, interval=20, max_epoch=600, eval_num=10, MAX_STEP=100
                         if trunc:
                             r.append(-1)
                         break
-            print('adjacent, current_player:', current_player, 'eval_num:', num, 'mean:', np.mean(r))
+            print('adjacent, current_player:', current_player, 'mean:', np.mean(r))
             adjacent_r.append(r)
             current_player += interval
 
