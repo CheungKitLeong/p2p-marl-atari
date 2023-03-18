@@ -108,7 +108,7 @@ def process(agent1_dir, agent2_dir):
     plt.plot([i * 20 for i in range(len(data[2]))], np.array(data[2]))
     plt.xlabel('model')
     plt.ylabel('penalties')
-    p  # lt.title('evaluating with fixed opponent')
+    # lt.title('evaluating with fixed opponent')
 
     plt.subplot(2, 2, 4)
     plt.plot([i * 20 for i in range(len(data[3]))], np.array(data[3]))
