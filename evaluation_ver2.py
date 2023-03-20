@@ -64,7 +64,7 @@ def evaluation(dir1, dir2, interval=20, max_epoch=600, eval_num=50, MAX_STEP=300
                         else:
                             action = agents[n].select_greedy_action(new_obs)
                         env.step(action)
-
+                        old_obs[n] = new_obs
                     if done or trunc:
                         break
 
@@ -86,11 +86,11 @@ def evaluation(dir1, dir2, interval=20, max_epoch=600, eval_num=50, MAX_STEP=300
 def process(agent1_dir, agent2_dir):
     data = evaluation(agent1_dir, agent2_dir, interval=60, eval_num=10)
 
-    with open('fixed_ver2.csv', 'w') as f1:
-        writer = csv.writer(f1)
-        writer.writerow(["win_rates", "marks", "ff", "mean_r"])
-        for i in range(len(data[0])):
-            writer.writerow([data[0][i], data[1][i], data[2][i], data[3][i]])
+    # csv_data = np.genfromtxt('logs/fixed_ver2.csv', delimiter=',', skip_header=1)
+    # data = [csv_data[:,0], csv_data[:,1], csv_data[:,2], csv_data[:,3]]
+    # # print(data[0])
+
+
 
     plt.subplot(2, 2, 1)
     plt.plot([i * 20 for i in range(len(data[0]))], np.array(data[0]))
@@ -108,14 +108,15 @@ def process(agent1_dir, agent2_dir):
     plt.plot([i * 20 for i in range(len(data[2]))], np.array(data[2]))
     plt.xlabel('model')
     plt.ylabel('penalties')
-    # lt.title('evaluating with fixed opponent')
+    #plt.title('evaluating with fixed opponent')
 
     plt.subplot(2, 2, 4)
     plt.plot([i * 20 for i in range(len(data[3]))], np.array(data[3]))
     plt.xlabel('model')
     plt.ylabel('mean_rewards')
     # plt.title('evaluating with fixed opponent')
-    plt.savefig('result.png')
+    plt.tight_layout()
+    plt.savefig(agent2_dir + 'result.png')
 
 
 process(agent1_dir, agent2_dir)
