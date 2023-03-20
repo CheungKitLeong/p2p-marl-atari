@@ -29,7 +29,7 @@ class DQN(nn.Module):
         self.linear_nn = nn.Sequential(
             nn.Linear(cnn_output_shape, 512),
             nn.ReLU(),
-            nn.Linear(512, num_of_actions)
+            nn.Linear(512, 3)
         )
 
     # Called with either one element to determine next action, or a batch

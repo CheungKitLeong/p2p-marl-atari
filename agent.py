@@ -57,7 +57,7 @@ class Agent:
         rand_num = np.random.rand()
         if self.epsilon > rand_num:
             # Select random action - explore
-            return self.env.action_space(self.name).sample()
+            return np.random.randint(3)
         else:
             # Select best action
             return self.select_greedy_action(obs)
@@ -101,9 +101,9 @@ class Agent:
         self.rewards.append(self.total_reward)
         # print(self.num_iterations, self.ts_frame, time.time(), self.ts)
         fps = (self.num_iterations - self.ts_frame) / (time.time() - self.ts)
-        print('%d %d %s: rew:%d fps:%d, eps:%.2f, loss:%.4f' % (
-            self.num_iterations, self.num_games, self.name, self.total_reward, fps, self.epsilon,
-            np.mean(self.total_loss)))
+        # print('%d %d %s: rew:%d fps:%d, eps:%.2f, loss:%.4f' % (
+        #     self.num_iterations, self.num_games, self.name, self.total_reward, fps, self.epsilon,
+        #     np.mean(self.total_loss)))
         self.ts_frame = self.num_iterations
         self.ts = time.time()
 
@@ -117,6 +117,6 @@ class Agent:
 
         # Save the model dict
         # Create folder to save models
-        if self.num_games % 20 == 0:
+        if self.num_games % 500 == 0:
             path = 'models/' + self.path + '/epoch_' + str(self.num_games) + '.pt'
             save(self.agent_control.moving_nn.state_dict(), path)

@@ -1,15 +1,18 @@
 from agent import Agent
 import torch
+from mapping import *
 
+device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
+# device = torch.device('mps')
 
-def train_basic(env, hyperparams, num_of_episode, MAX_STEP=10000, BATCH_SIZE=32):
+def train_basic(env, hyperparams, num_of_episode, MAX_STEP=1000, BATCH_SIZE=32):
     """The very first training loop, no force fire, no action mapping, no self play"""
-    device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
+    # device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
     # Creating agents
     hyperparams['mode'] = "basic"
     agents = [Agent(env, hyperparams, device, 'first_0'), Agent(env, hyperparams, device, 'second_0')]
 
-    for episode in range(num_of_episode + 1):
+    for episode in range(num_of_episode):
         # Run one episode
         # Reset the environment and get the initial observation
         env.reset()
@@ -17,21 +20,22 @@ def train_basic(env, hyperparams, num_of_episode, MAX_STEP=10000, BATCH_SIZE=32)
         old_action = [0] * 2
         for i in range(MAX_STEP):
             # Inside a episode
-            done = False
-            trunc = False
+            # done = False
+            # trunc = False
 
             for n in range(2):
                 new_obs, reward, done, trunc, info = env.last()
-                action = agents[n].select_eps_greedy_action(new_obs)
-                env.step(action)
                 if old_obs[n] is not None:
                     agents[n].add_to_buffer(old_obs[n], old_action[n], new_obs, reward, (done or trunc))
+
+                action = agents[n].select_eps_greedy_action(new_obs)
+                env.step(map_action(action))
                 agents[n].sample_and_improve(BATCH_SIZE)
                 old_obs[n] = new_obs
                 old_action[n] = action
 
             # If the game is over, reset the environment
-            if done or trunc:
+            if reward != 0 or done or trunc:
                 break
         # Call when end a episode
         agents[0].print_info()

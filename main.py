@@ -2,7 +2,7 @@ from training import *
 from wrappers import make_pong
 
 if __name__ == '__main__':
-    NUM_OF_EPISODE = 600
+    NUM_OF_EPISODE = 50000
     DQN_HYPERPARAMS = {
         'eps_start': 1,
         'eps_end': 0.1,
@@ -15,5 +15,5 @@ if __name__ == '__main__':
     }
 
     env = make_pong()
-    train_stationary(env, DQN_HYPERPARAMS, NUM_OF_EPISODE)
+    train_basic(env, DQN_HYPERPARAMS, NUM_OF_EPISODE)
 
