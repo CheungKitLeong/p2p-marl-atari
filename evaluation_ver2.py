@@ -5,8 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import csv
 
-agent1_dir = 'models/2023-03-15_10_59_first_0/'
-agent2_dir = 'models/2023-03-15_10_59_second_0/'
+AGENT1_DIR = 'models/2023-03-15_10_59_first_0/'
 
 DQN_HYPERPARAMS = {
     'eps_start': 1,
@@ -33,12 +32,12 @@ def evaluation(dir1, dir2, interval=20, max_epoch=600, eval_num=50, MAX_STEP=300
         marks = []
         mean_rewards = []
         current_player = 0
-        fixed_agent_path = agent1_dir + 'epoch_{}.pt'.format(fixed_player_epoch)
+        fixed_agent_path = dir1 + 'epoch_{}.pt'.format(fixed_player_epoch)
         fixed_agent = Agent(env, DQN_HYPERPARAMS, device, 'first_0', fixed_agent_path)
 
         while current_player <= max_epoch:
             agents = [fixed_agent, Agent(env, DQN_HYPERPARAMS, device, 'second_0',
-                                         agent2_dir + 'epoch_{}.pt'.format(current_player))]
+                                         dir2 + 'epoch_{}.pt'.format(current_player))]
             mark = [0, 0]
             penalty = 0
             total_reward = 0
@@ -84,12 +83,17 @@ def evaluation(dir1, dir2, interval=20, max_epoch=600, eval_num=50, MAX_STEP=300
 
 
 def process(agent1_dir, agent2_dir):
-    data = evaluation(agent1_dir, agent2_dir, interval=60, eval_num=10)
+    interval = 20
+    data = evaluation(agent1_dir, agent2_dir, interval=interval)
 
     # csv_data = np.genfromtxt('logs/fixed_ver2.csv', delimiter=',', skip_header=1)
     # data = [csv_data[:,0], csv_data[:,1], csv_data[:,2], csv_data[:,3]]
     # # print(data[0])
-
+    with open(agent2_dir + 'fixed_ver2.csv', 'w') as f1:
+        writer = csv.writer(f1)
+        writer.writerow(["epoch, win_rates", "marks", "ff", "mean_r"])
+        for i in range(len(data[0])):
+            writer.writerow([i*interval, data[0][i], data[1][i], data[2][i], data[3][i]])
 
 
     plt.subplot(2, 2, 1)
@@ -119,4 +123,10 @@ def process(agent1_dir, agent2_dir):
     plt.savefig(agent2_dir + 'result.png')
 
 
-process(agent1_dir, agent2_dir)
+process(AGENT1_DIR, 'models/2023-03-15_10_59_second_0/')
+
+#process(AGENT1_DIR, 'models/2023-03-15_11_00_second_0/')
+
+#process(AGENT1_DIR, 'models/2023-03-15_11_03_second_0/')
+
+#process(AGENT1_DIR, 'models/2023-03-15_11_04_second_0/')
