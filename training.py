@@ -40,73 +40,76 @@ def train_basic(env, hyperparams, num_of_episode, MAX_STEP=1000, BATCH_SIZE=32):
         # Call when end a episode
         agents[0].print_info()
         agents[1].print_info()
-        agents[0].reset_parameters()
-        agents[1].reset_parameters()
+        # agents[0].reset_parameters()
+        # agents[1].reset_parameters()
 
 
-def train_stationary(env, hyperparams, num_of_episode, MAX_STEP=10000, BATCH_SIZE=32, episode_to_switch=50):
+def train_stationary(env, hyperparams, num_of_episode, MAX_STEP=1000, BATCH_SIZE=32, episode_to_switch=500):
     """Fixed one agent when training other agent"""
-    device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
+    # device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
     hyperparams['mode'] = "stationary"
 
     # Creating agents
     agents = [Agent(env, hyperparams, device, 'first_0'), Agent(env, hyperparams, device, 'second_0')]
+    training_agent = 1
 
-    for episode in range(num_of_episode * 2):
-        training_agent = 0 if episode % (episode_to_switch * 2) < episode_to_switch else 1
+    for episode in range(num_of_episode):
+        if episode % episode_to_switch == 0:
+            training_agent = (training_agent+1)%2
+
         env.reset()
         old_obs = [None] * 2
         old_action = [0] * 2
         for i in range(MAX_STEP):
-            done = False
-            trunc = False
+            # done = False
+            # trunc = False
 
             for n in range(2):
-                obs, reward, done, trunc, info = env.last()
+                new_obs, reward, done, trunc, info = env.last()
                 if n == training_agent:
-                    new_obs, reward, done, trunc, info = env.last()
-                    action = agents[n].select_eps_greedy_action(new_obs)
-                    env.step(action)
                     if old_obs[n] is not None:
                         agents[n].add_to_buffer(old_obs[n], old_action[n], new_obs, reward, (done or trunc))
+
+                    action = agents[n].select_eps_greedy_action(new_obs)
+                    env.step(map_action(action))
                     agents[n].sample_and_improve(BATCH_SIZE)
                     old_obs[n] = new_obs
                     old_action[n] = action
                 else:
                     # Non-training agent
-                    action = agents[n].select_greedy_action(obs)
-                    env.step(action)
+                    action = agents[n].select_eps_greedy_action(new_obs)
+                    env.step(map_action(action))
 
-            if done or trunc:
+            if reward != 0 or done or trunc:
                 break
 
         for n in range(2):
             if n == training_agent:
                 agents[n].print_info()
-                agents[n].reset_parameters()
+                # agents[n].reset_parameters()
 
     # Run one more episode to save the final model
-    env.reset()
-    old_obs = [None] * 2
-    old_action = [0] * 2
-    for i in range(MAX_STEP):
-        done = False
-        trunc = False
+    # env.reset()
+    # old_obs = [None] * 2
+    # old_action = [0] * 2
+    # for i in range(MAX_STEP):
+    #     done = False
+    #     trunc = False
 
-        for n in range(2):
-            new_obs, reward, done, trunc, info = env.last()
-            action = agents[n].select_eps_greedy_action(new_obs)
-            env.step(action)
-            if old_obs[n] is not None:
-                agents[n].add_to_buffer(old_obs[n], old_action[n], new_obs, reward, (done or trunc))
-            agents[n].sample_and_improve(BATCH_SIZE)
-            old_obs[n] = new_obs
-            old_action[n] = action
+    #     for n in range(2):
+    #         new_obs, reward, done, trunc, info = env.last()
+    #         action = agents[n].select_eps_greedy_action(new_obs)
+    #         env.step(action)
+    #         if old_obs[n] is not None:
+    #             agents[n].add_to_buffer(old_obs[n], old_action[n], new_obs, reward, (done or trunc))
+    #         agents[n].sample_and_improve(BATCH_SIZE)
+    #         old_obs[n] = new_obs
+    #         old_action[n] = action
 
-        if done or trunc:
-            break
+    #     if done or trunc:
+    #         break
 
-    agents[0].print_info()
-    agents[1].print_info()
-    agents[0].reset_parameters()
-    agents[1].reset_parameters()
+    # agents[0].print_info()
+    # agents[1].print_info()
+    # agents[0].reset_parameters()
+    # agents[1].reset_parameters()

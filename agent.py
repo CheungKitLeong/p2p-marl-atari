@@ -117,6 +117,7 @@ class Agent:
 
         # Save the model dict
         # Create folder to save models
+        self.reset_parameters()
         if self.num_games % 500 == 0:
             path = 'models/' + self.path + '/epoch_' + str(self.num_games) + '.pt'
             save(self.agent_control.moving_nn.state_dict(), path)

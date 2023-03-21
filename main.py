@@ -15,5 +15,6 @@ if __name__ == '__main__':
     }
 
     env = make_pong()
-    train_basic(env, DQN_HYPERPARAMS, NUM_OF_EPISODE)
+    # train_basic(env, DQN_HYPERPARAMS, NUM_OF_EPISODE)
+    train_stationary(env, DQN_HYPERPARAMS, NUM_OF_EPISODE)
 
