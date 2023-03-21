@@ -21,7 +21,7 @@ DQN_HYPERPARAMS = {
 # device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 device = torch.device("mps")
 
-def evaluation(dir1, dir2, interval=20, max_epoch=20, eval_num=1, MAX_STEP=10000):
+def evaluation(dir1, dir2, interval=500, max_epoch=50000, eval_num=1, MAX_STEP=10000):
     env = make_pong(True)
     def fixed_opponent(fixed_player_epoch=300):
         fixed_r = []
@@ -138,8 +138,20 @@ def process(agent1_dir, agent2_dir):
     plt.title('evaluating with adjacent opponent')
     plt.savefig('adjacent.png')
 
-process(agent1_dir, agent2_dir)
+# process(agent1_dir, agent2_dir)
 
+def test(model1, model2):
+    env = make_pong(True)
+    agent = [Agent(env, DQN_HYPERPARAMS, device, 'first_0', model), Agent(env, DQN_HYPERPARAMS, device, 'second_0', model)]
+    while True:
+        env.reset()
+        for i in range(1000):
+            for n in range(2):
+                new_obs, reward, done, trunc, info = env.last()
+                action = agents[n].select_greedy_action(new_obs)
+                env.step(map_action(action))
 
+            if reward != 0 or done or trunc:
+                break
 
 
