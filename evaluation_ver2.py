@@ -4,6 +4,7 @@ from wrappers import make_pong
 import numpy as np
 import matplotlib.pyplot as plt
 import csv
+from datetime import datetime
 
 AGENT1_DIR = 'models/2023-03-15_10_59_first_0/'
 
@@ -42,7 +43,7 @@ def evaluation(dir1, dir2, interval=20, max_epoch=600, eval_num=50, MAX_STEP=300
             penalty = 0
             total_reward = 0
             for num in range(eval_num):
-                print('fixed ,current_player:', current_player, 'eval_num:', num)
+                #print('fixed ,current_player:', current_player, 'eval_num:', num)
                 env.reset()
                 old_obs = [None] * 2
 
@@ -72,12 +73,12 @@ def evaluation(dir1, dir2, interval=20, max_epoch=600, eval_num=50, MAX_STEP=300
             penalties.append(penalty)
             mean_rewards.append(float(total_reward) / eval_num)
 
-            print('fixed ,current_player:%d, win_rates:%f, mean_rewards:%f' % (current_player, float(mark[1]) / float(sum(mark)), float(total_reward) / eval_num))
+            print('%s, current_player:%d, win_rates:%f, mean_rewards:%f' % (datetime.now().strftime('%H:%M:%S'), current_player, float(mark[1]) / float(sum(mark)), float(total_reward) / eval_num))
             current_player += interval
 
         return win_rates, marks, penalties, mean_rewards
 
-    print('Started fixed evaluation...')
+    print(datetime.now().strftime('%H:%M:%S') + 'Started fixed evaluation...')
     fixed = fixed_opponent()
     return fixed
 
