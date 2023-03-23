@@ -32,6 +32,13 @@ class P2PAgentControl(AgentControl):
         predictor_loss.backward()
         self.pred_optimizer.step()
 
+    def compute_uncertainty(self, obs):
+        tensor_obs = torch.tensor(np.array([obs]), dtype=torch.float).to(self.device)
+        predictor_action_value = self.predictor_nn(tensor_obs).detach()
+        moving_action_value = self.moving_nn(tensor_obs).detach()
+        uncertainty = self.loss(predictor_action_value, moving_action_value)
+        return uncertainty.item()
+
 
 class P2PAgent(Agent):
 
@@ -44,6 +51,7 @@ class P2PAgent(Agent):
         self.give_threshold = hyperparameters['give_threshold']
         self.ask_budget = hyperparameters['ask_budget']
         self.give_budget = hyperparameters['give_budget']
+        self.uncertainties = []
 
     def set_advisor(self, advisors):
         """Set the adviser agent
@@ -51,37 +59,33 @@ class P2PAgent(Agent):
         """
         self.advisors = advisors
 
-        # In training function:
-        # agents = [P2P_Agent(env, hyperparams, device, 'first_0'), P2P_Agent(env, hyperparams, device, 'second_0')]
-        # agents[0].set_advisor([agents[1]])
-        # agents[1].set_advisor([agents[0]])
-
-    def compute_uncertainty(self, obs):
-        tensor_obs = torch.tensor(np.array([obs]), dtype=torch.float).to(self.device)
-        predictor_action_value = self.predictor_nn(tensor_obs).detach()
-        moving_action_value = self.moving_nn(tensor_obs).detach()
-        uncertainty = self.loss(predictor_action_value, moving_action_value)
-        return uncertainty.item()
-
     def check_ask(self, obs) -> bool:
         """Determine should the agent ask advice"""
-        return self.compute_uncertainty(obs) > self.ask_threshold
+        uct = self.agent_control.compute_uncertainty(obs)
+        self.uncertainties.append(uct)
+        if uct > self.ask_threshold:
+            print('%d Agent:%s, UCT: %f, asked' % (self.num_iterations, self.name, uct))
+        return uct > self.ask_threshold
 
     def check_advise(self, obs) -> bool:
         """Determine should the agent give advise"""
-        return self.compute_uncertainty(obs) < self.give_threshold
+        uct = self.agent_control.compute_uncertainty(obs)
+
+        if uct < self.give_threshold:
+            print('%d Agent:%s, UCT: %f, gived' % (self.num_iterations, self.name, uct))
+        return uct < self.ask_threshold
 
     def ask_advice(self, obs):
         action = None
         advices = []
         for advisor in self.advisors:
             if advisor.name == self.name:
-                #  obs =
+                obs = np.flip(obs, -1)
             a = advisor.give_advice(obs)
             if a is not None:
                 advices.append(a)
 
-        if not advices:  # check if the list is empty
+        if advices:  # check if the list is empty
             action = max(set(advices), key=advices.count)  # Majority voting
 
         return action
@@ -89,7 +93,7 @@ class P2PAgent(Agent):
     def select_eps_greedy_action(self, obs):
         """Add ask advice features"""
         action = None
-        if self.ask_budget > 0 and self.check_ask():
+        if self.ask_budget > 0 and self.check_ask(obs):
             action = self.ask_advice(obs)
         if action is None:
             action = super().select_eps_greedy_action(obs)
@@ -106,3 +110,11 @@ class P2PAgent(Agent):
             self.give_budget -= 1
 
         return action
+
+    def print_info(self):
+        super().print_info()
+        if self.summary_writer is not None:
+            self.summary_writer.add_scalar('ask_budget', self.ask_budget, self.num_games)
+            self.summary_writer.add_scalar('give_budget', self.give_budget, self.num_games)
+            self.summary_writer.add_scalar('mean_uct', np.mean(self.uncertainties), self.num_games)
+

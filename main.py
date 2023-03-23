@@ -15,6 +15,14 @@ if __name__ == '__main__':
         'batch_size': 32
     }
 
+    P2P_HYPERPARAMS = {
+        'ask_budget': 500000,
+        'give_budget': 500000,
+        'ask_threshold': 0.015,
+        'give_threshold': 0.005
+    }
+
+    DQN_HYPERPARAMS = DQN_HYPERPARAMS | P2P_HYPERPARAMS
     env = make_pong()
-    train_stationary(env, DQN_HYPERPARAMS, NUM_OF_EPISODE, BATCH_SIZE=DQN_HYPERPARAMS['batch_size'])
+    train_basic(env, DQN_HYPERPARAMS, NUM_OF_EPISODE, BATCH_SIZE=DQN_HYPERPARAMS['batch_size'], p2p=True)
 

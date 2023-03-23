@@ -1,14 +1,21 @@
 from agent import Agent
+from p2p_agent import P2PAgent
 from wrappers import custom_reshape
 import torch
 
 
-def train_basic(env, hyperparams, num_of_episode, MAX_STEP=10000, BATCH_SIZE=32):
+def train_basic(env, hyperparams, num_of_episode, MAX_STEP=5000, BATCH_SIZE=32, p2p=False):
     """The very first training loop, no force fire, no action mapping, no self play"""
     device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
     # Creating agents
     hyperparams['mode'] = "basic"
-    agents = [Agent(env, hyperparams, device, 'first_0'), Agent(env, hyperparams, device, 'second_0')]
+    if p2p:
+        hyperparams['p2p'] = 'True'
+        agents = [P2PAgent(env, hyperparams, device, 'first_0'), P2PAgent(env, hyperparams, device, 'second_0')]
+        agents[0].set_advisor([agents[1]])
+        agents[1].set_advisor([agents[0]])
+    else:
+        agents = [Agent(env, hyperparams, device, 'first_0'), Agent(env, hyperparams, device, 'second_0')]
 
     for episode in range(num_of_episode + 1):
         # Run one episode
@@ -42,13 +49,19 @@ def train_basic(env, hyperparams, num_of_episode, MAX_STEP=10000, BATCH_SIZE=32)
         agents[1].reset_parameters()
 
 
-def train_stationary(env, hyperparams, num_of_episode, MAX_STEP=10000, BATCH_SIZE=32, episode_to_switch=50):
+def train_stationary(env, hyperparams, num_of_episode, MAX_STEP=5000, BATCH_SIZE=32, episode_to_switch=100, p2p=False):
     """Fixed one agent when training other agent"""
     device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
     hyperparams['mode'] = "stationary"
     hyperparams['episode_to_switch'] = episode_to_switch
     # Creating agents
-    agents = [Agent(env, hyperparams, device, 'first_0'), Agent(env, hyperparams, device, 'second_0')]
+    if p2p:
+        hyperparams['p2p'] = 'True'
+        agents = [P2PAgent(env, hyperparams, device, 'first_0'), P2PAgent(env, hyperparams, device, 'second_0')]
+        agents[0].set_advisor([agents[1]])
+        agents[1].set_advisor([agents[0]])
+    else:
+        agents = [Agent(env, hyperparams, device, 'first_0'), Agent(env, hyperparams, device, 'second_0')]
 
     for episode in range(num_of_episode * 2):
         training_agent = 0 if episode % (episode_to_switch * 2) < episode_to_switch else 1
