@@ -2,6 +2,7 @@ from pettingzoo.atari import pong_v3
 import supersuit
 import numpy as np
 
+
 def make_pong(render=False):
     if render:
         env = pong_v3.env(obs_type='grayscale_image', render_mode='human')
@@ -16,5 +17,9 @@ def make_pong(render=False):
     env = supersuit.dtype_v0(env, dtype=np.float32)
     env = supersuit.frame_stack_v1(env)
     env = supersuit.normalize_obs_v0(env)
-    env = supersuit.reshape_v0(env, (4, 84, 84))
+    # env = supersuit.reshape_v0(env, (4, 84, 84)) # It is broken
     return env
+
+
+def custom_reshape(obs):
+    return obs.transpose(-1, 0, 1)

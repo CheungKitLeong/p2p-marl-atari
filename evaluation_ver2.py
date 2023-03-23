@@ -1,6 +1,6 @@
 import torch
 from agent import Agent
-from wrappers import make_pong
+from wrappers import make_pong, custom_reshape
 import numpy as np
 import matplotlib.pyplot as plt
 import csv
@@ -19,7 +19,7 @@ DQN_HYPERPARAMS = {
     'n_iter_update_nn': 1000,
 }
 
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
 
 
 # device = torch.device("mps")
@@ -52,6 +52,7 @@ def evaluation(dir1, dir2, interval=20, max_epoch=600, eval_num=50, MAX_STEP=300
                     trunc = False
                     for n in range(2):
                         new_obs, reward, done, trunc, info = env.last()
+                        new_obs = custom_reshape(new_obs)
                         if n == 1:
                             total_reward += reward
                         if reward > 0:
@@ -83,9 +84,8 @@ def evaluation(dir1, dir2, interval=20, max_epoch=600, eval_num=50, MAX_STEP=300
     return fixed
 
 
-def process(agent1_dir, agent2_dir):
-    interval = 20
-    data = evaluation(agent1_dir, agent2_dir, interval=interval)
+def process(agent1_dir, agent2_dir, interval = 20, max_epoch=600):
+    data = evaluation(agent1_dir, agent2_dir, interval=interval, max_epoch=max_epoch)
 
     # csv_data = np.genfromtxt('logs/fixed_ver2.csv', delimiter=',', skip_header=1)
     # data = [csv_data[:,0], csv_data[:,1], csv_data[:,2], csv_data[:,3]]
@@ -96,6 +96,7 @@ def process(agent1_dir, agent2_dir):
         for i in range(len(data[0])):
             writer.writerow([i*interval, data[0][i], data[1][i], data[2][i], data[3][i]])
 
+    plt.clf()
 
     plt.subplot(2, 2, 1)
     plt.plot([i * 20 for i in range(len(data[0]))], np.array(data[0]))
@@ -124,10 +125,15 @@ def process(agent1_dir, agent2_dir):
     plt.savefig(agent2_dir + 'result.png')
 
 
-process(AGENT1_DIR, 'models/2023-03-15_10_59_second_0/')
+#process(AGENT1_DIR, 'models/2023-03-20_18_12_second_0/', max_epoch=1200)
 
-#process(AGENT1_DIR, 'models/2023-03-15_11_00_second_0/')
+#process(AGENT1_DIR, 'models/2023-03-20_18_15_second_0/', max_epoch=1200)
 
-#process(AGENT1_DIR, 'models/2023-03-15_11_03_second_0/')
+#process(AGENT1_DIR, 'models/2023-03-21_14_44_second_0/', max_epoch=1200)
 
-#process(AGENT1_DIR, 'models/2023-03-15_11_04_second_0/')
+#process(AGENT1_DIR, 'models/2023-03-21_14_45_second_0/', max_epoch=1200)
+
+#process(AGENT1_DIR, 'models/2023-03-21_14_46_second_0/', max_epoch=1200)
+
+process(AGENT1_DIR, 'models/2023-03-21_14_48_second_0/', max_epoch=1200)
+

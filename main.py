@@ -12,8 +12,9 @@ if __name__ == '__main__':
         'learning_rate': 5e-5,
         'gamma': 0.9,
         'n_iter_update_nn': 1000,
+        'batch_size': 32
     }
 
     env = make_pong()
-    train_stationary(env, DQN_HYPERPARAMS, NUM_OF_EPISODE)
+    train_stationary(env, DQN_HYPERPARAMS, NUM_OF_EPISODE, BATCH_SIZE=DQN_HYPERPARAMS['batch_size'])
 

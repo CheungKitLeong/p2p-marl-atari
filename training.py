@@ -1,4 +1,5 @@
 from agent import Agent
+from wrappers import custom_reshape
 import torch
 
 
@@ -22,6 +23,7 @@ def train_basic(env, hyperparams, num_of_episode, MAX_STEP=10000, BATCH_SIZE=32)
 
             for n in range(2):
                 new_obs, reward, done, trunc, info = env.last()
+                new_obs = custom_reshape(new_obs)
                 action = agents[n].select_eps_greedy_action(new_obs)
                 env.step(action)
                 if old_obs[n] is not None:
@@ -44,7 +46,7 @@ def train_stationary(env, hyperparams, num_of_episode, MAX_STEP=10000, BATCH_SIZ
     """Fixed one agent when training other agent"""
     device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
     hyperparams['mode'] = "stationary"
-
+    hyperparams['episode_to_switch'] = episode_to_switch
     # Creating agents
     agents = [Agent(env, hyperparams, device, 'first_0'), Agent(env, hyperparams, device, 'second_0')]
 
@@ -58,9 +60,9 @@ def train_stationary(env, hyperparams, num_of_episode, MAX_STEP=10000, BATCH_SIZ
             trunc = False
 
             for n in range(2):
-                obs, reward, done, trunc, info = env.last()
+                new_obs, reward, done, trunc, info = env.last()
+                new_obs = custom_reshape(new_obs)
                 if n == training_agent:
-                    new_obs, reward, done, trunc, info = env.last()
                     action = agents[n].select_eps_greedy_action(new_obs)
                     env.step(action)
                     if old_obs[n] is not None:
@@ -70,7 +72,7 @@ def train_stationary(env, hyperparams, num_of_episode, MAX_STEP=10000, BATCH_SIZ
                     old_action[n] = action
                 else:
                     # Non-training agent
-                    action = agents[n].select_greedy_action(obs)
+                    action = agents[n].select_greedy_action(new_obs)
                     env.step(action)
 
             if done or trunc:
@@ -91,6 +93,7 @@ def train_stationary(env, hyperparams, num_of_episode, MAX_STEP=10000, BATCH_SIZ
 
         for n in range(2):
             new_obs, reward, done, trunc, info = env.last()
+            new_obs = custom_reshape(new_obs)
             action = agents[n].select_eps_greedy_action(new_obs)
             env.step(action)
             if old_obs[n] is not None:

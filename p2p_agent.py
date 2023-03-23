@@ -1,5 +1,5 @@
 from agent import Agent
-from agent_control import AgentControl
+from agent_control import AgentControl, correct_obs_shape
 from neural_net import DQN
 import torch.optim as optim
 import numpy as np
@@ -9,7 +9,7 @@ import torch
 class P2PAgentControl(AgentControl):
     def __init__(self, env, device, lr, gamma, name, pred_lr=1e-4):
         super().__init__(env, device, lr, gamma, name)
-        self.predictor_nn = DQN(input_shape=env.observation_space(name).shape,
+        self.predictor_nn = DQN(input_shape=correct_obs_shape(env, name),
                                 num_of_actions=env.action_space(name).n).to(device)
         self.pred_optimizer = optim.AdamW(self.predictor_nn.parameters(), lr=pred_lr)
 
@@ -75,6 +75,8 @@ class P2PAgent(Agent):
         action = None
         advices = []
         for advisor in self.advisors:
+            if advisor.name == self.name:
+                #  obs =
             a = advisor.give_advice(obs)
             if a is not None:
                 advices.append(a)

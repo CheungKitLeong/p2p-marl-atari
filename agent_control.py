@@ -4,6 +4,11 @@ from neural_net import DQN
 import torch.optim as optim
 import torch.nn as nn
 
+
+def correct_obs_shape(env, name):
+    return (env.observation_space(name).shape[-1],) + env.observation_space(name).shape[:-1]
+
+
 class AgentControl:
 
     def __init__(self, env, device, lr, gamma, name):
@@ -12,8 +17,8 @@ class AgentControl:
         self.gamma = gamma
         self.name = name
         # We need to send both NNs to GPU hence '.to("cuda")
-        self.moving_nn = DQN(input_shape=env.observation_space(name).shape, num_of_actions=env.action_space(name).n).to(device)
-        self.target_nn = DQN(input_shape=env.observation_space(name).shape, num_of_actions=env.action_space(name).n).to(device)
+        self.moving_nn = DQN(input_shape=correct_obs_shape(env, name), num_of_actions=env.action_space(name).n).to(device)
+        self.target_nn = DQN(input_shape=correct_obs_shape(env, name), num_of_actions=env.action_space(name).n).to(device)
         self.target_nn.load_state_dict(self.moving_nn.state_dict())
 
         self.optimizer = optim.AdamW(self.moving_nn.parameters(), lr=lr)
