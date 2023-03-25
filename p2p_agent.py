@@ -79,7 +79,7 @@ class P2PAgent(Agent):
         action = None
         advices = []
         for advisor in self.advisors:
-            if advisor.name == self.name:
+            if advisor.name != self.name:
                 obs = np.flip(obs, -1)
             a = advisor.give_advice(obs)
             if a is not None:
@@ -118,3 +118,6 @@ class P2PAgent(Agent):
             self.summary_writer.add_scalar('give_budget', self.give_budget, self.num_games)
             self.summary_writer.add_scalar('mean_uct', np.mean(self.uncertainties), self.num_games)
 
+    def reset_parameters(self):
+        super().reset_parameters()
+        self.uncertainties = []
