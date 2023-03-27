@@ -24,5 +24,5 @@ if __name__ == '__main__':
 
     DQN_HYPERPARAMS = DQN_HYPERPARAMS | P2P_HYPERPARAMS
     env = make_pong()
-    train_basic(env, DQN_HYPERPARAMS, NUM_OF_EPISODE, BATCH_SIZE=DQN_HYPERPARAMS['batch_size'], p2p=True)
-
+    # train_basic(env, DQN_HYPERPARAMS, NUM_OF_EPISODE, BATCH_SIZE=DQN_HYPERPARAMS['batch_size'], p2p=True)
+    flex_advise(env, DQN_HYPERPARAMS, NUM_OF_EPISODE)

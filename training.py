@@ -2,7 +2,8 @@ from agent import Agent
 from p2p_agent import P2PAgent
 from wrappers import custom_reshape
 import torch
-
+import random
+import numpy as np
 
 def train_basic(env, hyperparams, num_of_episode, MAX_STEP=5000, BATCH_SIZE=32, p2p=False):
     """The very first training loop, no force fire, no action mapping, no self play"""
@@ -122,3 +123,91 @@ def train_stationary(env, hyperparams, num_of_episode, MAX_STEP=5000, BATCH_SIZE
     agents[1].print_info()
     agents[0].reset_parameters()
     agents[1].reset_parameters()
+
+def flex_advise(env, hyperparams, num_of_episode, history_size=15, obedience=0.85, teaching_period=5, MAX_STEP=5000, BATCH_SIZE=32):
+    device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
+    # device = torch.device('mps')
+
+    hyperparams['mode'] = "flexible"
+    agents = [Agent(env, hyperparams, device, 'first_0'), Agent(env, hyperparams, device, 'second_0')]
+    advisor = None
+    count = 0
+    games = []
+
+    for episode in range(num_of_episode + 1):
+        env.reset()
+        old_obs = [None] * 2
+        old_action = [0] * 2
+        pts = []
+
+        if advisor == None:
+            for i in range(MAX_STEP):
+                for n in range(2):
+                    new_obs, reward, done, trunc, info = env.last()
+                    new_obs = custom_reshape(new_obs)
+                    action = agents[n].select_eps_greedy_action(new_obs)
+                    env.step(action)
+                    if old_obs[n] is not None:
+                        agents[n].add_to_buffer(old_obs[n], old_action[n], new_obs, reward, (done or trunc))
+                    agents[n].sample_and_improve(BATCH_SIZE)
+                    old_obs[n] = new_obs
+                    old_action[n] = action
+                    if reward == 1:
+                        pts.append(n)
+
+                if done or trunc:
+                    break
+
+            if len(games) >= history_size:
+                games.pop(0)
+            games.append(0 if sum(pts)/len(pts) <= 0.5 else 1)
+            agents[0].print_info()
+            agents[1].print_info()
+            agents[0].reset_parameters()
+            agents[1].reset_parameters()
+        else:
+            for i in range(MAX_STEP):
+                for n in range(2):
+                    new_obs, reward, done, trunc, info = env.last()
+                    new_obs = custom_reshape(new_obs)
+                    if advisor != n:
+                        obs = np.flip(new_obs, -1)
+                        advice = agent[advisor].select_eps_greedy_action(obs)
+                        obey = True if random.random() <= obedience else False
+                        env.step(advice if obey else agents[n].select_eps_greedy_action(new_obs))
+                    else:
+                        env.step(agents[n].select_eps_greedy_action(new_obs))
+
+                    if old_obs[n] is not None:
+                        agents[n].add_to_buffer(old_obs[n], old_action[n], new_obs, reward, (done or trunc))
+                    agents[n].sample_and_improve(BATCH_SIZE)
+                    old_obs[n] = new_obs
+                    old_action[n] = action
+                    if reward == 1:
+                        pts.append(n)
+
+                if done or trunc:
+                    break
+
+            count += 1
+            agents[0].print_info()
+            agents[1].print_info()
+            agents[0].reset_parameters()
+            agents[1].reset_parameters()
+
+        print(games)
+        print(len(games), sum(games)/len(games))
+
+        if count == teaching_period:
+            count = 0
+            advisor = None
+            games.clear()
+
+        if len(games) < history_size:
+            pass
+        elif sum(games)/len(games) <= 0.2:
+            advisor = 0
+        elif sum(games)/len(games) > 0.8:
+            advisor = 1
+
+
