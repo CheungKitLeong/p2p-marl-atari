@@ -1,5 +1,5 @@
 from training import *
-from wrappers import make_pong
+from wrappers import make_pong, make_boxing
 
 if __name__ == '__main__':
     NUM_OF_EPISODE = 600
@@ -23,6 +23,6 @@ if __name__ == '__main__':
     }
 
     DQN_HYPERPARAMS = DQN_HYPERPARAMS | P2P_HYPERPARAMS
-    env = make_pong()
-    # train_basic(env, DQN_HYPERPARAMS, NUM_OF_EPISODE, BATCH_SIZE=DQN_HYPERPARAMS['batch_size'], p2p=True)
-    flex_advise(env, DQN_HYPERPARAMS, NUM_OF_EPISODE)
+    env = make_boxing(True)
+    train_basic(env, DQN_HYPERPARAMS, NUM_OF_EPISODE, BATCH_SIZE=DQN_HYPERPARAMS['batch_size'], p2p=False)
+    # flex_advise(env, DQN_HYPERPARAMS, NUM_OF_EPISODE)
